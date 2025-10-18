@@ -1,12 +1,18 @@
 {
 	"compiler": {
-		"version": "0.8.30+commit.73712a01"
+		"version": "0.8.20+commit.a1b79de6"
 	},
 	"language": "Solidity",
 	"output": {
 		"abi": [
 			{
-				"inputs": [],
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "initialOwner",
+						"type": "address"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
@@ -278,16 +284,16 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "to",
+						"name": "_to",
 						"type": "address"
 					},
 					{
 						"internalType": "uint256",
-						"name": "amount",
+						"name": "_amount",
 						"type": "uint256"
 					}
 				],
-				"name": "mint",
+				"name": "mockPayment",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -316,6 +322,24 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "ownerMint",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -419,7 +443,7 @@
 			}
 		],
 		"devdoc": {
-			"details": "Mock IDRX token untuk testing di Base Sepolia",
+			"details": "Mock IDRX token untuk testing di Base Sepolia. Digunakan untuk simulasi Top Up.",
 			"errors": {
 				"ERC20InsufficientAllowance(address,uint256,uint256)": [
 					{
@@ -504,19 +528,23 @@
 					"details": "Returns the value of tokens owned by `account`."
 				},
 				"decimals()": {
-					"details": "Decimals override"
+					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5.05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. This is the default value returned by this function, unless it's overridden. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
 				},
-				"faucet()": {
-					"details": "Faucet: beri 1 juta IDRX gratis untuk testing"
-				},
-				"mint(address,uint256)": {
-					"details": "Mint function untuk testing (anyone can mint)"
+				"mockPayment(address,uint256)": {
+					"details": "HANYA dipanggil oleh Server Wallet (Owner) untuk mencetak IDRX ke Wallet Custodial User.",
+					"params": {
+						"_amount": "Jumlah IDRX (dalam unit terkecil 18 decimals) yang di-top-up.",
+						"_to": "Alamat wallet Custodial User yang akan menerima IDRX."
+					}
 				},
 				"name()": {
 					"details": "Returns the name of the token."
 				},
 				"owner()": {
 					"details": "Returns the address of the current owner."
+				},
+				"ownerMint(address,uint256)": {
+					"details": "Fungsi mint generik, dibatasi hanya untuk Owner (Server Wallet) sebagai kontrol."
 				},
 				"renounceOwnership()": {
 					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
@@ -543,8 +571,11 @@
 		"userdoc": {
 			"kind": "user",
 			"methods": {
-				"mint(address,uint256)": {
-					"notice": "Untuk production, hapus function ini atau restrict ke owner"
+				"faucet()": {
+					"notice": "Faucet: Memberikan 1 juta IDRX gratis untuk testing developer (dapat dipanggil siapa saja)."
+				},
+				"mockPayment(address,uint256)": {
+					"notice": "[CUSTODIAL PAYMENT] Mensimulasikan Top Up Rupiah."
 				}
 			},
 			"notice": "1 IDRX = 1 Indonesian Rupiah 18 decimals (standard ERC20)",
@@ -555,7 +586,7 @@
 		"compilationTarget": {
 			"contracts/MockIDRX.sol": "MockIDRX"
 		},
-		"evmVersion": "prague",
+		"evmVersion": "shanghai",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -616,11 +647,11 @@
 			]
 		},
 		"contracts/MockIDRX.sol": {
-			"keccak256": "0x24e0e263c4b90c48afd34037593c905c712cf0ea49e4e426b6a3bf7fd237a87f",
+			"keccak256": "0xfb48cfa94b26af9c93bad1ac6102efff63e96c3bb1219a28a9b5fff728006802",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e104ff00e34b2b5fee569051f993a9a3ab0ddc8b745ae4613c5090e8ed62ee8c",
-				"dweb:/ipfs/QmViUJsfffNn5TWVbYBHmqHhPodR9o914VBVggoeKVQV4C"
+				"bzz-raw://fdfcc3d45a6a59d6b2a4037dad6ea8905c36c6309ffc051ee9537439b53c13da",
+				"dweb:/ipfs/QmPXWsPFgeoMvEMHEyFHgMgZgintaK8sofRq1kLCpkpzzc"
 			]
 		}
 	},

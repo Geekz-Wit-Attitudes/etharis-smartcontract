@@ -1,133 +1,68 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
- * @title SponsorFiEscrow
- * @dev Escrow contract untuk sponsorship deals antara Brand dan Creator
- * @notice Menggunakan IDRX sebagai payment token (Indonesian Rupiah stablecoin)
+ * @title EtharisEscrow
+ * @author Etharis Team
+ * @dev Escrow contract untuk sponsorship deals. Semua fungsi action hanya dapat dipanggil oleh Server Wallet (Owner).
+ * @notice Menggunakan IDRX sebagai payment token (Indonesian Rupiah stablecoin).
  */
-contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
-    
-    // IDRX Token address (akan di-set saat deployment)
+contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
+    using SafeERC20 for IERC20; 
+
     IERC20 public idrxToken;
-    
-    // Platform fee dalam basis points (250 = 2.5%)
     uint256 public platformFeeBps = 250; // 2.5%
     uint256 public constant BPS_DENOMINATOR = 10000;
-    
-    // Platform fee recipient
+    uint256 public constant REVIEW_PERIOD = 72 hours;
     address public feeRecipient;
-    
-    // Enum untuk status contract
+
     enum ContractStatus {
-        PENDING,        // 0: Baru dibuat, belum funded
-        ACTIVE,         // 1: Sudah funded, creator bisa mulai kerja
-        PENDING_REVIEW, // 2: Content submitted, menunggu brand review (72h)
-        DISPUTED,       // 3: Brand dispute deliverable
-        COMPLETED,      // 4: Payment released ke creator
-        CANCELLED       // 5: Deal cancelled
+        PENDING, ACTIVE, PENDING_REVIEW, DISPUTED, COMPLETED, CANCELLED
     }
     
-    // Struct untuk menyimpan detail deal
     struct Deal {
-        string dealId;              // ID unik deal (e.g., "SPFI-001")
-        address brand;              // Wallet address brand
-        address creator;            // Wallet address creator
-        uint256 amount;             // Jumlah IDRX (dalam wei, 18 decimals)
-        uint256 deadline;           // Unix timestamp deadline posting
-        string briefHash;           // IPFS hash dari brief document
-        ContractStatus status;      // Status deal saat ini
-        uint256 fundedAt;           // Timestamp kapan di-fund
-        uint256 submittedAt;        // Timestamp kapan creator submit
-        uint256 reviewDeadline;     // Timestamp deadline review (72h after submit)
-        string contentUrl;          // URL konten yang di-submit creator
-        bool exists;                // Flag untuk cek apakah deal exists
+        string dealId;
+        address brand;
+        address creator;
+        uint256 amount;
+        uint256 deadline;
+        string briefHash;
+        ContractStatus status;
+        uint256 fundedAt;
+        uint256 submittedAt;
+        uint256 reviewDeadline;
+        string contentUrl;
+        bool exists;
     }
     
-    // Mapping dealId => Deal
     mapping(string => Deal) public deals;
-    
-    // Mapping address => array of dealIds (untuk query deals per user)
     mapping(address => string[]) public brandDeals;
     mapping(address => string[]) public creatorDeals;
     
-    // Events
-    event DealCreated(
-        string indexed dealId,
-        address indexed brand,
-        address indexed creator,
-        uint256 amount,
-        uint256 deadline
-    );
-    
-    event DealFunded(
-        string indexed dealId,
-        address indexed brand,
-        uint256 amount,
-        uint256 timestamp
-    );
-    
-    event ContentSubmitted(
-        string indexed dealId,
-        address indexed creator,
-        string contentUrl,
-        uint256 timestamp,
-        uint256 reviewDeadline
-    );
-    
-    event DealApproved(
-        string indexed dealId,
-        address indexed brand,
-        uint256 timestamp
-    );
-    
-    event PaymentReleased(
-        string indexed dealId,
-        address indexed creator,
-        uint256 amount,
-        uint256 platformFee,
-        uint256 timestamp
-    );
-    
-    event DisputeInitiated(
-        string indexed dealId,
-        address indexed brand,
-        string reason,
-        uint256 timestamp
-    );
-    
-    event DisputeResolved(
-        string indexed dealId,
-        address indexed creator,
-        bool accepted8020,
-        uint256 creatorAmount,
-        uint256 brandRefund,
-        uint256 timestamp
-    );
-    
-    event DealCancelled(
-        string indexed dealId,
-        address indexed initiator,
-        uint256 refundAmount,
-        uint256 timestamp
-    );
-    
+    event DealCreated(string indexed dealId, address indexed brand, address indexed creator, uint256 amount, uint256 deadline);
+    event DealFunded(string indexed dealId, address indexed brand, uint256 amount);
+    event ContentSubmitted(string indexed dealId, address indexed creator, string contentUrl, uint256 reviewDeadline);
+    event DealApproved(string indexed dealId, address indexed brand);
+    event PaymentReleased(string indexed dealId, address indexed creator, uint256 amount, uint256 platformFee);
+    event DisputeInitiated(string indexed dealId, address indexed brand, string reason);
+    event DisputeResolved(string indexed dealId, address indexed creator, bool accepted8020, uint256 creatorAmount, uint256 brandRefund);
+    event DealCancelled(string indexed dealId, address indexed initiator, uint256 refundAmount);
     event PlatformFeeUpdated(uint256 oldFee, uint256 newFee);
     event FeeRecipientUpdated(address oldRecipient, address newRecipient);
-    
-    // Modifiers
-    modifier onlyBrand(string memory _dealId) {
-        require(deals[_dealId].brand == msg.sender, "Only brand can call this");
+
+    modifier onlyDealBrand(string memory _dealId, address _brand) {
+        require(deals[_dealId].brand == _brand, "Invalid brand address for deal");
         _;
     }
     
-    modifier onlyCreator(string memory _dealId) {
-        require(deals[_dealId].creator == msg.sender, "Only creator can call this");
+    modifier onlyDealCreator(string memory _dealId, address _creator) {
+        require(deals[_dealId].creator == _creator, "Invalid creator address for deal");
         _;
     }
     
@@ -140,46 +75,45 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
         require(deals[_dealId].status == _status, "Invalid deal status");
         _;
     }
-    
-    /**
-     * @dev Constructor
-     * @param _idrxToken Address of IDRX token contract
-     * @param _feeRecipient Address untuk terima platform fee
-     */
-    constructor(address _idrxToken, address _feeRecipient, address _initialOwner) Ownable (_initialOwner) {
-        require(_idrxToken != address(0), "Invalid IDRX token address");
-        require(_feeRecipient != address(0), "Invalid fee recipient");
+
+    constructor(address _idrxToken, address _feeRecipient, address _initialOwner) 
+        Ownable (_initialOwner) 
+    {
+        require(_idrxToken != address(0), "Invalid IDRX token address"); // FIXED: Zero Address Validation
+        require(_feeRecipient != address(0), "Invalid fee recipient"); // FIXED: Zero Address Validation
+        require(_initialOwner != address(0), "Invalid owner address"); // ADDED: Zero Address Validation
         
         idrxToken = IERC20(_idrxToken);
         feeRecipient = _feeRecipient;
     }
     
+    // =================================================================
+    // CUSTODIAL USER ACTIONS (Dipanggil oleh Server Wallet - onlyOwner)
+    // =================================================================
+    
     /**
-     * @dev Buat deal baru
-     * @param _dealId ID unik untuk deal
-     * @param _creator Wallet address creator
-     * @param _amount Jumlah IDRX (dalam wei)
-     * @param _deadline Unix timestamp deadline
-     * @param _briefHash IPFS hash dari brief
+     * @notice [CUSTODIAL] Brand membuat deal baru.
      */
     function createDeal(
         string memory _dealId,
-        address _creator,
+        address _brandAddress,
+        address _creatorAddress,
         uint256 _amount,
         uint256 _deadline,
         string memory _briefHash
-    ) external whenNotPaused {
+    ) external onlyOwner whenNotPaused { // RESTRICTED: onlyOwner
         require(!deals[_dealId].exists, "Deal ID already exists");
-        require(_creator != address(0), "Invalid creator address");
-        require(_creator != msg.sender, "Creator cannot be brand");
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_creatorAddress != address(0), "Invalid creator address");
+        require(_brandAddress != address(0), "Invalid brand address");
+        require(_brandAddress != _creatorAddress, "Creator cannot be brand");
+        require(_amount != 0, "Amount must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in future");
-        require(bytes(_briefHash).length > 0, "Brief hash required");
+        require(bytes(_briefHash).length != 0, "Brief hash required");
         
         deals[_dealId] = Deal({
             dealId: _dealId,
-            brand: msg.sender,
-            creator: _creator,
+            brand: _brandAddress, 
+            creator: _creatorAddress, 
             amount: _amount,
             deadline: _deadline,
             briefHash: _briefHash,
@@ -190,95 +124,85 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
             contentUrl: "",
             exists: true
         });
+
+        brandDeals[_brandAddress].push(_dealId);
+        creatorDeals[_creatorAddress].push(_dealId);
         
-        brandDeals[msg.sender].push(_dealId);
-        creatorDeals[_creator].push(_dealId);
-        
-        emit DealCreated(_dealId, msg.sender, _creator, _amount, _deadline);
+        emit DealCreated(_dealId, _brandAddress, _creatorAddress, _amount, _deadline);
     }
     
     /**
-     * @dev Fund deal dengan IDRX
-     * @param _dealId ID deal yang akan di-fund
+     * @notice [CUSTODIAL] Brand fund deal.
      */
-    function fundDeal(string memory _dealId) 
+    function fundDeal(string memory _dealId, address _brandAddress) 
         external 
+        nonReentrant
+        onlyOwner
         whenNotPaused
         dealExists(_dealId)
-        onlyBrand(_dealId)
+        onlyDealBrand(_dealId, _brandAddress)
         inStatus(_dealId, ContractStatus.PENDING)
-        nonReentrant
     {
         Deal storage deal = deals[_dealId];
         
-        // Transfer IDRX dari brand ke contract
-        require(
-            idrxToken.transferFrom(msg.sender, address(this), deal.amount),
-            "IDRX transfer failed"
-        );
+        idrxToken.safeTransferFrom(_brandAddress, address(this), deal.amount); 
         
         deal.status = ContractStatus.ACTIVE;
         deal.fundedAt = block.timestamp;
         
-        emit DealFunded(_dealId, msg.sender, deal.amount, block.timestamp);
+        emit DealFunded(_dealId, _brandAddress, deal.amount);
     }
-    
+
     /**
-     * @dev Creator submit konten (dengan URL)
-     * @param _dealId ID deal
-     * @param _contentUrl URL konten yang sudah live
+     * @notice [CUSTODIAL] Creator submit konten.
      */
-    function submitContent(string memory _dealId, string memory _contentUrl)
+    function submitContent(string memory _dealId, address _creatorAddress, string memory _contentUrl)
         external
+        onlyOwner // RESTRICTED: onlyOwner
         whenNotPaused
         dealExists(_dealId)
-        onlyCreator(_dealId)
+        onlyDealCreator(_dealId, _creatorAddress)
         inStatus(_dealId, ContractStatus.ACTIVE)
     {
-        require(bytes(_contentUrl).length > 0, "Content URL required");
-        
         Deal storage deal = deals[_dealId];
+        
+        require(block.timestamp <= deal.deadline, "Submission deadline has passed. Deal is auto-cancelled.");
+
+        require(bytes(_contentUrl).length != 0, "Content URL required"); // FIXED: Cheaper Conditional
         
         deal.status = ContractStatus.PENDING_REVIEW;
         deal.submittedAt = block.timestamp;
-        deal.reviewDeadline = block.timestamp + 72 hours;
+        deal.reviewDeadline = block.timestamp + REVIEW_PERIOD;
         deal.contentUrl = _contentUrl;
         
-        emit ContentSubmitted(
-            _dealId,
-            msg.sender,
-            _contentUrl,
-            block.timestamp,
-            deal.reviewDeadline
-        );
+        emit ContentSubmitted(_dealId, _creatorAddress, _contentUrl, deal.reviewDeadline);
     }
     
     /**
-     * @dev Brand approve content & release payment instantly
-     * @param _dealId ID deal
+     * @notice [CUSTODIAL] Brand approve content & release payment.
      */
-    function approveDeal(string memory _dealId)
+    function approveDeal(string memory _dealId, address _brandAddress)
         external
+        nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
+        onlyOwner // RESTRICTED: onlyOwner
         whenNotPaused
         dealExists(_dealId)
-        onlyBrand(_dealId)
+        onlyDealBrand(_dealId, _brandAddress)
         inStatus(_dealId, ContractStatus.PENDING_REVIEW)
-        nonReentrant
     {
-        emit DealApproved(_dealId, msg.sender, block.timestamp);
+        emit DealApproved(_dealId, _brandAddress);
         _releasePayment(_dealId);
     }
     
     /**
-     * @dev Auto-release payment setelah 72 jam (callable by anyone)
-     * @param _dealId ID deal
+     * @notice Auto-release payment.
      */
     function autoReleasePayment(string memory _dealId)
         external
+        nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
         whenNotPaused
         dealExists(_dealId)
         inStatus(_dealId, ContractStatus.PENDING_REVIEW)
-        nonReentrant
     {
         Deal storage deal = deals[_dealId];
         require(block.timestamp >= deal.reviewDeadline, "Review period not ended");
@@ -288,7 +212,6 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
     
     /**
      * @dev Internal function untuk release payment
-     * @param _dealId ID deal
      */
     function _releasePayment(string memory _dealId) internal {
         Deal storage deal = deals[_dealId];
@@ -298,127 +221,132 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
         
         deal.status = ContractStatus.COMPLETED;
         
-        // Transfer ke creator
-        require(
-            idrxToken.transfer(deal.creator, creatorAmount),
-            "Transfer to creator failed"
-        );
+        // FIXED: Menggunakan SafeERC20.safeTransfer
+        idrxToken.safeTransfer(deal.creator, creatorAmount);
         
-        // Transfer platform fee
-        require(
-            idrxToken.transfer(feeRecipient, platformFee),
-            "Transfer fee failed"
-        );
+        // FIXED: Menggunakan SafeERC20.safeTransfer
+        idrxToken.safeTransfer(feeRecipient, platformFee);
         
-        emit PaymentReleased(
-            _dealId,
-            deal.creator,
-            creatorAmount,
-            platformFee,
-            block.timestamp
-        );
+        emit PaymentReleased(_dealId, deal.creator, creatorAmount, platformFee);
     }
-    
+
     /**
-     * @dev Brand initiate dispute
-     * @param _dealId ID deal
-     * @param _reason Alasan dispute
+     * @notice [CUSTODIAL] Brand initiate dispute.
      */
-    function initiateDispute(string memory _dealId, string memory _reason)
+    function initiateDispute(string memory _dealId, address _brandAddress, string memory _reason)
         external
+        onlyOwner // RESTRICTED: onlyOwner
         whenNotPaused
         dealExists(_dealId)
-        onlyBrand(_dealId)
+        onlyDealBrand(_dealId, _brandAddress)
         inStatus(_dealId, ContractStatus.PENDING_REVIEW)
     {
         Deal storage deal = deals[_dealId];
         require(block.timestamp < deal.reviewDeadline, "Review period ended");
-        require(bytes(_reason).length > 0, "Reason required");
+        require(bytes(_reason).length != 0, "Reason required"); // FIXED: Cheaper Conditional
         
         deal.status = ContractStatus.DISPUTED;
         
-        emit DisputeInitiated(_dealId, msg.sender, _reason, block.timestamp);
+        emit DisputeInitiated(_dealId, _brandAddress, _reason);
     }
     
     /**
-     * @dev Creator resolve dispute
-     * @param _dealId ID deal
-     * @param _accept8020 true = accept 80/20, false = reject (brand gets 100%)
+     * @notice [CUSTODIAL] Creator resolve dispute.
      */
-    function resolveDispute(string memory _dealId, bool _accept8020)
+    function resolveDispute(string memory _dealId, address _creatorAddress, bool _accept8020)
         external
+        nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
+        onlyOwner // RESTRICTED: onlyOwner
         whenNotPaused
         dealExists(_dealId)
-        onlyCreator(_dealId)
+        onlyDealCreator(_dealId, _creatorAddress)
         inStatus(_dealId, ContractStatus.DISPUTED)
-        nonReentrant
     {
         Deal storage deal = deals[_dealId];
         deal.status = ContractStatus.COMPLETED;
         
+        uint256 totalEscrow = deal.amount;
         uint256 creatorAmount;
         uint256 brandRefund;
+        uint256 platformFee; 
         
         if (_accept8020) {
-            // 80% ke creator, 20% refund ke brand
-            creatorAmount = (deal.amount * 8000) / BPS_DENOMINATOR; // 80%
-            brandRefund = deal.amount - creatorAmount; // 20%
+            // Logic Fee Deduction dari 80% Payout
+            uint256 grossPayout = (totalEscrow * 8000) / BPS_DENOMINATOR;
+            brandRefund = totalEscrow - grossPayout;
             
-            require(
-                idrxToken.transfer(deal.creator, creatorAmount),
-                "Transfer to creator failed"
-            );
-            require(
-                idrxToken.transfer(deal.brand, brandRefund),
-                "Refund to brand failed"
-            );
+            // Hitung Fee dari 80% Gross Payout
+            platformFee = (grossPayout * platformFeeBps) / BPS_DENOMINATOR;
+            uint256 creatorNet = grossPayout - platformFee;
+            
+            creatorAmount = creatorNet;
+            
+            // Perform Transfers (SafeERC20)
+            idrxToken.safeTransfer(deal.creator, creatorNet);
+            idrxToken.safeTransfer(deal.brand, brandRefund);
+            idrxToken.safeTransfer(feeRecipient, platformFee); 
         } else {
             // 0% ke creator, 100% refund ke brand
             creatorAmount = 0;
-            brandRefund = deal.amount;
+            brandRefund = totalEscrow; 
+            platformFee = 0;
             
-            require(
-                idrxToken.transfer(deal.brand, brandRefund),
-                "Refund to brand failed"
-            );
+            // Perform Transfer (SafeERC20)
+            idrxToken.safeTransfer(deal.brand, brandRefund);
         }
         
-        emit DisputeResolved(
-            _dealId,
-            msg.sender,
-            _accept8020,
-            creatorAmount,
-            brandRefund,
-            block.timestamp
-        );
+        emit DisputeResolved(_dealId, _creatorAddress, _accept8020, creatorAmount, brandRefund);
+        emit PaymentReleased(_dealId, deal.creator, creatorAmount, platformFee);
+    }
+
+    /**
+     * @notice Memicu refund penuh ke Brand jika Creator gagal submit konten sebelum deadline.
+     * @dev Dapat dipanggil oleh Brand atau Server Wallet setelah deadline terlampaui dan status masih ACTIVE.
+     */
+    function autoRefundAfterDeadline(string memory _dealId)
+        external
+        nonReentrant
+        whenNotPaused
+        dealExists(_dealId)
+        inStatus(_dealId, ContractStatus.ACTIVE) // Hanya berlaku jika deal masih ACTIVE (Creator belum submit)
+    {
+        Deal storage deal = deals[_dealId];
+        
+        require(block.timestamp > deal.deadline, "Deadline has not yet passed.");
+        
+        uint256 refundAmount = deal.amount;
+        
+        idrxToken.safeTransfer(deal.brand, refundAmount);
+        
+        deal.status = ContractStatus.CANCELLED;
+        
+        emit DealCancelled(_dealId, msg.sender, refundAmount); // msg.sender adalah yang memicu refund (Brand/Server)
     }
     
     /**
-     * @dev Cancel deal sebelum funded (hanya brand yang bisa)
-     * @param _dealId ID deal
+     * @notice [CUSTODIAL] Cancel deal sebelum funded.
      */
-    function cancelDeal(string memory _dealId)
+    function cancelDeal(string memory _dealId, address _brandAddress)
         external
+        onlyOwner // RESTRICTED: onlyOwner
         dealExists(_dealId)
-        onlyBrand(_dealId)
+        onlyDealBrand(_dealId, _brandAddress)
         inStatus(_dealId, ContractStatus.PENDING)
     {
         Deal storage deal = deals[_dealId];
         deal.status = ContractStatus.CANCELLED;
         
-        emit DealCancelled(_dealId, msg.sender, 0, block.timestamp);
+        emit DealCancelled(_dealId, _brandAddress, 0);
     }
     
     /**
-     * @dev Emergency cancel deal yang sudah funded (hanya owner)
-     * @param _dealId ID deal
-     * @notice Hanya untuk emergency, refund penuh ke brand
+     * @notice Emergency cancel deal (owner only).
      */
     function emergencyCancelDeal(string memory _dealId)
         external
-        onlyOwner
+        nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
+        onlyOwner // RESTRICTED: onlyOwner
         dealExists(_dealId)
-        nonReentrant
     {
         Deal storage deal = deals[_dealId];
         require(
@@ -426,22 +354,22 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
             deal.status == ContractStatus.PENDING_REVIEW,
             "Cannot cancel this deal"
         );
-        
+
         uint256 refundAmount = deal.amount;
         deal.status = ContractStatus.CANCELLED;
         
-        require(
-            idrxToken.transfer(deal.brand, refundAmount),
-            "Refund failed"
-        );
+        // FIXED: Menggunakan SafeERC20
+        idrxToken.safeTransfer(deal.brand, refundAmount);
         
-        emit DealCancelled(_dealId, msg.sender, refundAmount, block.timestamp);
+        emit DealCancelled(_dealId, owner(), refundAmount);
     }
-    
-    // View functions
-    
+
+    // =================================================================
+    // VIEW FUNCTIONS (GETTERS)
+    // =================================================================
+
     /**
-     * @dev Get deal details
+     * @notice Mendapatkan detail deal.
      */
     function getDeal(string memory _dealId) external view returns (
         address brand,
@@ -467,23 +395,20 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
             deal.reviewDeadline
         );
     }
-    
+
     /**
-     * @dev Get deals by brand
+     * @notice Mendapatkan daftar deal berdasarkan Brand atau Creator.
      */
-    function getDealsByBrand(address _brand) external view returns (string[] memory) {
-        return brandDeals[_brand];
+    function getDeals(address _userAddress, bool _isBrand) external view returns (string[] memory) {
+        if (_isBrand) {
+            return brandDeals[_userAddress];
+        } else {
+            return creatorDeals[_userAddress];
+        }
     }
     
     /**
-     * @dev Get deals by creator
-     */
-    function getDealsByCreator(address _creator) external view returns (string[] memory) {
-        return creatorDeals[_creator];
-    }
-    
-    /**
-     * @dev Check if can auto-release
+     * @notice Check if can auto-release.
      */
     function canAutoRelease(string memory _dealId) external view returns (bool) {
         Deal storage deal = deals[_dealId];
@@ -492,26 +417,27 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
                block.timestamp >= deal.reviewDeadline;
     }
     
-    // Admin functions
-    
+    // =================================================================
+    // ADMIN FUNCTIONS
+    // =================================================================
+
     /**
-     * @dev Update platform fee (only owner)
+     * @notice Update platform fee (only owner).
      */
     function updatePlatformFee(uint256 _newFeeBps) external onlyOwner {
-        require(_newFeeBps <= 1000, "Fee too high (max 10%)"); // Max 10%
+        require(_newFeeBps <= 1000, "Fee too high (max 10%)");
         
         uint256 oldFee = platformFeeBps;
         platformFeeBps = _newFeeBps;
         
         emit PlatformFeeUpdated(oldFee, _newFeeBps);
     }
-    
+
     /**
-     * @dev Update fee recipient
+     * @notice Update fee recipient (only owner).
      */
     function updateFeeRecipient(address _newRecipient) external onlyOwner {
         require(_newRecipient != address(0), "Invalid address");
-        
         address oldRecipient = feeRecipient;
         feeRecipient = _newRecipient;
         
@@ -519,24 +445,27 @@ contract SponsorFiEscrow is ReentrancyGuard, Ownable, Pausable {
     }
     
     /**
-     * @dev Pause contract (emergency)
+     * @notice Pause contract (emergency).
+     * @dev Memanggil fungsi internal _pause() dari Pausable.
      */
-    function pause() external onlyOwner {
+    function pause() external onlyOwner { // FIXED: Owner-controlled pause
         _pause();
     }
     
     /**
-     * @dev Unpause contract
+     * @notice Unpause contract.
+     * @dev Memanggil fungsi internal _unpause() dari Pausable.
      */
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwner { // FIXED: Owner-controlled unpause
         _unpause();
     }
     
     /**
-     * @dev Withdraw stuck tokens (emergency only, not deal funds)
+     * @notice Withdraw stuck tokens (emergency only, not deal funds).
      */
     function emergencyWithdraw(address _token, uint256 _amount) external onlyOwner {
         require(_token != address(idrxToken), "Cannot withdraw IDRX");
-        IERC20(_token).transfer(owner(), _amount);
+        // FIXED: Menggunakan SafeERC20.safeTransfer
+        IERC20(_token).safeTransfer(owner(), _amount);
     }
 }
