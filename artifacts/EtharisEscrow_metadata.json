@@ -712,6 +712,11 @@
 				"name": "getDeal",
 				"outputs": [
 					{
+						"internalType": "string",
+						"name": "dealId",
+						"type": "string"
+					},
+					{
 						"internalType": "address",
 						"name": "brand",
 						"type": "address"
@@ -750,6 +755,21 @@
 						"internalType": "uint256",
 						"name": "reviewDeadline",
 						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "fundedAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "submittedAt",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "exists",
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -1175,11 +1195,11 @@
 			]
 		},
 		"contracts/EtharisEscrow.sol": {
-			"keccak256": "0xd496201151c04629d82c8bb16731f63a4217754a586fa1affb0ce1d157c79fb3",
+			"keccak256": "0xf30b4cc8012e6a86d2460b6e4e4ef20ebcab07b0c76042915eaec217a36908f2",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9abd7bb809b4f97b53b40499de314113e01f503ac226f191126a49055880d5ce",
-				"dweb:/ipfs/QmWQmWguzwWdgDDyoqqFvCiJtok3JcXtiMBi2XUPnBqemQ"
+				"bzz-raw://e5d05680970edb4d59fee5353b4adcabf7d014c049386c2c71a2607d996ac5db",
+				"dweb:/ipfs/QmPDdzFKQgmbmqEX42g2UrTmGgyfJF47BXsp2WjkiKvXwD"
 			]
 		}
 	},
