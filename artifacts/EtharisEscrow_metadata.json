@@ -27,14 +27,8 @@
 				"type": "constructor"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "owner",
-						"type": "address"
-					}
-				],
-				"name": "OwnableInvalidOwner",
+				"inputs": [],
+				"name": "AccessControlBadConfirmation",
 				"type": "error"
 			},
 			{
@@ -43,9 +37,14 @@
 						"internalType": "address",
 						"name": "account",
 						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "neededRole",
+						"type": "bytes32"
 					}
 				],
-				"name": "OwnableUnauthorizedAccount",
+				"name": "AccessControlUnauthorizedAccount",
 				"type": "error"
 			},
 			{
@@ -281,25 +280,6 @@
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "previousOwner",
-						"type": "address"
-					},
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "newOwner",
-						"type": "address"
-					}
-				],
-				"name": "OwnershipTransferred",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
 						"indexed": false,
 						"internalType": "address",
 						"name": "account",
@@ -363,6 +343,81 @@
 				"anonymous": false,
 				"inputs": [
 					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "previousAdminRole",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "newAdminRole",
+						"type": "bytes32"
+					}
+				],
+				"name": "RoleAdminChanged",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "RoleGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					}
+				],
+				"name": "RoleRevoked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
 						"indexed": false,
 						"internalType": "address",
 						"name": "account",
@@ -387,12 +442,38 @@
 			},
 			{
 				"inputs": [],
+				"name": "DEFAULT_ADMIN_ROLE",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "REVIEW_PERIOD",
 				"outputs": [
 					{
 						"internalType": "uint256",
 						"name": "",
 						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "SERVER_ROLE",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
 					}
 				],
 				"stateMutability": "view",
@@ -687,13 +768,38 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "_dealId",
+						"name": "dealId",
 						"type": "string"
 					},
 					{
 						"internalType": "address",
-						"name": "_brandAddress",
+						"name": "brandAddress",
 						"type": "address"
+					},
+					{
+						"internalType": "uint96",
+						"name": "amount",
+						"type": "uint96"
+					},
+					{
+						"internalType": "uint64",
+						"name": "deadline",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint8",
+						"name": "v",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "r",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "s",
+						"type": "bytes32"
 					}
 				],
 				"name": "fundDeal",
@@ -800,6 +906,67 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					}
+				],
+				"name": "getRoleAdmin",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "grantRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "hasRole",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "idrxToken",
 				"outputs": [
@@ -837,19 +1004,6 @@
 			},
 			{
 				"inputs": [],
-				"name": "owner",
-				"outputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "pause",
 				"outputs": [],
 				"stateMutability": "nonpayable",
@@ -882,8 +1036,19 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "renounceOwnership",
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "callerConfirmation",
+						"type": "address"
+					}
+				],
+				"name": "renounceRole",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -914,6 +1079,24 @@
 			{
 				"inputs": [
 					{
+						"internalType": "bytes32",
+						"name": "role",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "revokeRole",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "string",
 						"name": "_dealId",
 						"type": "string"
@@ -937,14 +1120,20 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "newOwner",
-						"type": "address"
+						"internalType": "bytes4",
+						"name": "interfaceId",
+						"type": "bytes4"
 					}
 				],
-				"name": "transferOwnership",
-				"outputs": [],
-				"stateMutability": "nonpayable",
+				"name": "supportsInterface",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -985,14 +1174,14 @@
 			"author": "Etharis Team",
 			"details": "Escrow contract untuk sponsorship deals. Semua fungsi action hanya dapat dipanggil oleh Server Wallet (Owner).",
 			"errors": {
-				"OwnableInvalidOwner(address)": [
+				"AccessControlBadConfirmation()": [
 					{
-						"details": "The owner is not a valid owner account. (eg. `address(0)`)"
+						"details": "The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}."
 					}
 				],
-				"OwnableUnauthorizedAccount(address)": [
+				"AccessControlUnauthorizedAccount(address,bytes32)": [
 					{
-						"details": "The caller account is not authorized to perform an operation."
+						"details": "The `account` is missing a role."
 					}
 				],
 				"SafeERC20FailedOperation(address)": [
@@ -1005,6 +1194,15 @@
 				"Paused(address)": {
 					"details": "Emitted when the pause is triggered by `account`."
 				},
+				"RoleAdminChanged(bytes32,bytes32,bytes32)": {
+					"details": "Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this."
+				},
+				"RoleGranted(bytes32,address,address)": {
+					"details": "Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}."
+				},
+				"RoleRevoked(bytes32,address,address)": {
+					"details": "Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)"
+				},
 				"Unpaused(address)": {
 					"details": "Emitted when the pause is lifted by `account`."
 				}
@@ -1014,8 +1212,14 @@
 				"autoRefundAfterDeadline(string)": {
 					"details": "Dapat dipanggil oleh Brand atau Server Wallet setelah deadline terlampaui dan status masih ACTIVE."
 				},
-				"owner()": {
-					"details": "Returns the address of the current owner."
+				"getRoleAdmin(bytes32)": {
+					"details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+				},
+				"grantRole(bytes32,address)": {
+					"details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
+				},
+				"hasRole(bytes32,address)": {
+					"details": "Returns `true` if `account` has been granted `role`."
 				},
 				"pause()": {
 					"details": "Memanggil fungsi internal _pause() dari Pausable."
@@ -1023,11 +1227,14 @@
 				"paused()": {
 					"details": "Returns true if the contract is paused, and false otherwise."
 				},
-				"renounceOwnership()": {
-					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby disabling any functionality that is only available to the owner."
+				"renounceRole(bytes32,address)": {
+					"details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event."
 				},
-				"transferOwnership(address)": {
-					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				"revokeRole(bytes32,address)": {
+					"details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event."
+				},
+				"supportsInterface(bytes4)": {
+					"details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
 				},
 				"unpause()": {
 					"details": "Memanggil fungsi internal _unpause() dari Pausable."
@@ -1063,7 +1270,7 @@
 				"emergencyWithdraw(address,uint256)": {
 					"notice": "Withdraw stuck tokens (emergency only, not deal funds)."
 				},
-				"fundDeal(string,address)": {
+				"fundDeal(string,address,uint96,uint64,uint8,bytes32,bytes32)": {
 					"notice": "[CUSTODIAL] Brand fund deal."
 				},
 				"getDeal(string)": {
@@ -1108,18 +1315,27 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
-		"remappings": []
+		"remappings": [],
+		"viaIR": true
 	},
 	"sources": {
-		"@openzeppelin/contracts/access/Ownable.sol": {
-			"keccak256": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",
+		"@openzeppelin/contracts/access/AccessControl.sol": {
+			"keccak256": "0x1a6b4f6b7798ab80929d491b89d5427a9b3338c0fd1acd0ba325f69c6f1646af",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6",
-				"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
+				"bzz-raw://7bb7f346c12a14dc622bc105ce3c47202fbc89f4b153a28a63bb68193297330c",
+				"dweb:/ipfs/QmagwF8P3bUBXwdo159ueEnY9dLSvEWwK24kk2op58egwG"
+			]
+		},
+		"@openzeppelin/contracts/access/IAccessControl.sol": {
+			"keccak256": "0xbff9f59c84e5337689161ce7641c0ef8e872d6a7536fbc1f5133f128887aba3c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b308f882e796f7b79c9502deacb0a62983035c6f6f4e962b319ba6a1f4a77d3d",
+				"dweb:/ipfs/QmaWCW7ahEQqFjwhSUhV7Ae7WhfNvzSpE7DQ58hvEooqPL"
 			]
 		},
 		"@openzeppelin/contracts/interfaces/IERC1363.sol": {
@@ -1170,6 +1386,22 @@
 				"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV"
 			]
 		},
+		"@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": {
+			"keccak256": "0x2fa0657dd7b8bc75475a47f64bc04a9adb42236b15d65e6781594ea69a46c3e4",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7496f42681aed94bf0142a077324e50b86046610c1724e7c12e96cf1c365914a",
+				"dweb:/ipfs/QmZvhNdSAAbN4PKPdheAqwpXukUiXp3Q3TdQccDMg2NDTV"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol": {
+			"keccak256": "0xc7134e0f63b0adcee02bf4b15efb2d0d4b1c03ae0d127dc90d846da4cab23a76",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f5265dd0f6809e9fbb0ca8da7a5cd0940fcf6d8fcd4df20fbac942617d17b8d6",
+				"dweb:/ipfs/QmS1gFsXoZ3uCEH6mfuRVvhE235WTGA8ttSWSs6Ehc9DUb"
+			]
+		},
 		"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
 			"keccak256": "0x982c5cb790ab941d1e04f807120a71709d4c313ba0bfc16006447ffbd27fbbd5",
 			"license": "MIT",
@@ -1186,6 +1418,14 @@
 				"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
 			]
 		},
+		"@openzeppelin/contracts/utils/introspection/ERC165.sol": {
+			"keccak256": "0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377",
+				"dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E"
+			]
+		},
 		"@openzeppelin/contracts/utils/introspection/IERC165.sol": {
 			"keccak256": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
 			"license": "MIT",
@@ -1195,11 +1435,11 @@
 			]
 		},
 		"contracts/EtharisEscrow.sol": {
-			"keccak256": "0xf30b4cc8012e6a86d2460b6e4e4ef20ebcab07b0c76042915eaec217a36908f2",
+			"keccak256": "0x7f669a406befa691fb8d2ec379cf81f0cb497bce89f596b1778ea3f48f770686",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e5d05680970edb4d59fee5353b4adcabf7d014c049386c2c71a2607d996ac5db",
-				"dweb:/ipfs/QmPDdzFKQgmbmqEX42g2UrTmGgyfJF47BXsp2WjkiKvXwD"
+				"bzz-raw://1f7ac73e57fdd63c8e9097454ba336c2f886560c366b63666a17d1496e24a569",
+				"dweb:/ipfs/QmeH7GuBU4zEPcbGsNgJZRyyfqnNN6v6qed1jaAjDngdxA"
 			]
 		}
 	},

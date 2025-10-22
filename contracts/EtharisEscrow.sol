@@ -2,10 +2,11 @@
 pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
  * @title EtharisEscrow
@@ -13,7 +14,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
  * @dev Escrow contract untuk sponsorship deals. Semua fungsi action hanya dapat dipanggil oleh Server Wallet (Owner).
  * @notice Menggunakan IDRX sebagai payment token (Indonesian Rupiah stablecoin).
  */
-contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
+contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
     using SafeERC20 for IERC20;
 
     IERC20 public idrxToken;
@@ -21,6 +22,8 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     uint256 public constant BPS_DENOMINATOR = 10000;
     uint256 public constant REVIEW_PERIOD = 72 hours;
     address public feeRecipient;
+
+    bytes32 public constant SERVER_ROLE = keccak256("SERVER_ROLE");
 
     enum ContractStatus {
         PENDING,
@@ -95,6 +98,11 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     event PlatformFeeUpdated(uint256 oldFee, uint256 newFee);
     event FeeRecipientUpdated(address oldRecipient, address newRecipient);
 
+    modifier onlyServer() {
+        require(hasRole(SERVER_ROLE, msg.sender), "Not a server");
+        _;
+    }
+
     modifier onlyDealBrand(string memory _dealId, address _brand) {
         require(
             deals[_dealId].brand == _brand,
@@ -125,17 +133,20 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         address _idrxToken,
         address _feeRecipient,
         address _initialOwner
-    ) Ownable(_initialOwner) {
+    ) {
         require(_idrxToken != address(0), "Invalid IDRX token address"); // FIXED: Zero Address Validation
         require(_feeRecipient != address(0), "Invalid fee recipient"); // FIXED: Zero Address Validation
         require(_initialOwner != address(0), "Invalid owner address"); // ADDED: Zero Address Validation
 
         idrxToken = IERC20(_idrxToken);
         feeRecipient = _feeRecipient;
+
+        _grantRole(SERVER_ROLE, _initialOwner);
+        _setRoleAdmin(SERVER_ROLE, SERVER_ROLE);
     }
 
     // =================================================================
-    // CUSTODIAL USER ACTIONS (Dipanggil oleh Server Wallet - onlyOwner)
+    // CUSTODIAL USER ACTIONS (Dipanggil oleh Server Wallet - onlyServer)
     // =================================================================
 
     /**
@@ -148,8 +159,8 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         uint256 _amount,
         uint256 _deadline,
         string memory _briefHash
-    ) external onlyOwner whenNotPaused {
-        // RESTRICTED: onlyOwner
+    ) external onlyServer whenNotPaused {
+        // RESTRICTED: onlyServer
         require(!deals[_dealId].exists, "Deal ID already exists");
         require(_creatorAddress != address(0), "Invalid creator address");
         require(_brandAddress != address(0), "Invalid brand address");
@@ -189,25 +200,57 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
      * @notice [CUSTODIAL] Brand fund deal.
      */
     function fundDeal(
-        string memory _dealId,
-        address _brandAddress
+        string memory dealId,
+        address brandAddress,
+        uint96 amount,
+        uint64 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     )
         external
         nonReentrant
-        onlyOwner
+        onlyServer
         whenNotPaused
-        dealExists(_dealId)
-        onlyDealBrand(_dealId, _brandAddress)
-        inStatus(_dealId, ContractStatus.PENDING)
+        dealExists(dealId)
+        onlyDealBrand(dealId, brandAddress)
+        inStatus(dealId, ContractStatus.PENDING)
     {
-        Deal storage deal = deals[_dealId];
+        require(bytes(dealId).length != 0, "Invalid deal ID");
+        require(amount > 0, "Invalid amount");
 
-        idrxToken.safeTransferFrom(_brandAddress, address(this), deal.amount);
+        Deal storage deal = deals[dealId];
 
-        deal.status = ContractStatus.ACTIVE;
-        deal.fundedAt = block.timestamp;
+        // 1️⃣ Check brand's balance
+        uint256 balance = idrxToken.balanceOf(brandAddress);
+        require(balance >= amount, "Insufficient token balance");
 
-        emit DealFunded(_dealId, _brandAddress, deal.amount);
+        // 2️⃣ Attempt permit
+        bool permitSucceeded;
+        try
+            IERC20Permit(address(idrxToken)).permit(
+                brandAddress,
+                address(this),
+                amount,
+                deadline,
+                v,
+                r,
+                s
+            )
+        {
+            permitSucceeded = true;
+        } catch {
+            permitSucceeded = false;
+        }
+        // 3️⃣ Require permit succeeded
+        require(permitSucceeded, "Permit failed");
+
+        // 4️⃣ Transfer tokens to escrow
+        idrxToken.safeTransferFrom(brandAddress, address(this), amount);
+
+        deal.fundedAt = uint64(block.timestamp);
+
+        emit DealFunded(dealId, brandAddress, amount);
     }
 
     /**
@@ -219,7 +262,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         string memory _contentUrl
     )
         external
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         whenNotPaused
         dealExists(_dealId)
         onlyDealCreator(_dealId, _creatorAddress)
@@ -256,7 +299,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     )
         external
         nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         whenNotPaused
         dealExists(_dealId)
         onlyDealBrand(_dealId, _brandAddress)
@@ -316,7 +359,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         string memory _reason
     )
         external
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         whenNotPaused
         dealExists(_dealId)
         onlyDealBrand(_dealId, _brandAddress)
@@ -341,7 +384,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     )
         external
         nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         whenNotPaused
         dealExists(_dealId)
         onlyDealCreator(_dealId, _creatorAddress)
@@ -427,7 +470,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         address _brandAddress
     )
         external
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         dealExists(_dealId)
         onlyDealBrand(_dealId, _brandAddress)
         inStatus(_dealId, ContractStatus.PENDING)
@@ -446,7 +489,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     )
         external
         nonReentrant // FIXED: Pindahkan nonReentrant ke posisi awal
-        onlyOwner // RESTRICTED: onlyOwner
+        onlyServer // RESTRICTED: onlyServer
         dealExists(_dealId)
     {
         Deal storage deal = deals[_dealId];
@@ -462,7 +505,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
         // FIXED: Menggunakan SafeERC20
         idrxToken.safeTransfer(deal.brand, refundAmount);
 
-        emit DealCancelled(_dealId, owner(), refundAmount);
+        emit DealCancelled(_dealId, msg.sender, refundAmount);
     }
 
     // =================================================================
@@ -545,7 +588,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     /**
      * @notice Update platform fee (only owner).
      */
-    function updatePlatformFee(uint256 _newFeeBps) external onlyOwner {
+    function updatePlatformFee(uint256 _newFeeBps) external onlyServer {
         require(_newFeeBps <= 1000, "Fee too high (max 10%)");
 
         uint256 oldFee = platformFeeBps;
@@ -557,7 +600,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     /**
      * @notice Update fee recipient (only owner).
      */
-    function updateFeeRecipient(address _newRecipient) external onlyOwner {
+    function updateFeeRecipient(address _newRecipient) external onlyServer {
         require(_newRecipient != address(0), "Invalid address");
         address oldRecipient = feeRecipient;
         feeRecipient = _newRecipient;
@@ -569,7 +612,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
      * @notice Pause contract (emergency).
      * @dev Memanggil fungsi internal _pause() dari Pausable.
      */
-    function pause() external onlyOwner {
+    function pause() external onlyServer {
         // FIXED: Owner-controlled pause
         _pause();
     }
@@ -578,7 +621,7 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
      * @notice Unpause contract.
      * @dev Memanggil fungsi internal _unpause() dari Pausable.
      */
-    function unpause() external onlyOwner {
+    function unpause() external onlyServer {
         // FIXED: Owner-controlled unpause
         _unpause();
     }
@@ -589,9 +632,9 @@ contract EtharisEscrow is ReentrancyGuard, Ownable, Pausable {
     function emergencyWithdraw(
         address _token,
         uint256 _amount
-    ) external onlyOwner {
+    ) external onlyServer {
         require(_token != address(idrxToken), "Cannot withdraw IDRX");
         // FIXED: Menggunakan SafeERC20.safeTransfer
-        IERC20(_token).safeTransfer(owner(), _amount);
+        IERC20(_token).safeTransfer(msg.sender, _amount);
     }
 }
