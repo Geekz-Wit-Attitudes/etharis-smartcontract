@@ -247,6 +247,82 @@
 					{
 						"indexed": true,
 						"internalType": "address",
+						"name": "receiver",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "FaucetClaim",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "MockPayment",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "OwnerMint",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferStarted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
 						"name": "previousOwner",
 						"type": "address"
 					},
@@ -296,6 +372,13 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "acceptOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -510,6 +593,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "pendingOwner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -653,7 +749,8 @@
 			}
 		],
 		"devdoc": {
-			"details": "Mock IDRX token untuk testing di Base Sepolia. Digunakan untuk simulasi Top Up.",
+			"author": "Etharis",
+			"details": "This contract simulates custodial top-ups and developer faucet functionality. Uses Ownable2Step for safer access control.",
 			"errors": {
 				"ECDSAInvalidSignature()": [
 					{
@@ -755,6 +852,24 @@
 				"EIP712DomainChanged()": {
 					"details": "MAY be emitted to signal that the domain could have changed."
 				},
+				"FaucetClaim(address,uint256)": {
+					"params": {
+						"amount": "Amount of tokens minted from faucet.",
+						"receiver": "Address receiving the faucet tokens."
+					}
+				},
+				"MockPayment(address,uint256)": {
+					"params": {
+						"amount": "Amount of IDRX minted.",
+						"to": "Recipient wallet of the top-up."
+					}
+				},
+				"OwnerMint(address,uint256)": {
+					"params": {
+						"amount": "Amount of tokens minted.",
+						"to": "Recipient of the minted tokens."
+					}
+				},
 				"Transfer(address,address,uint256)": {
 					"details": "Emitted when `value` tokens are moved from one account (`from`) to another (`to`). Note that `value` may be zero."
 				}
@@ -763,6 +878,9 @@
 			"methods": {
 				"DOMAIN_SEPARATOR()": {
 					"details": "Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}."
+				},
+				"acceptOwnership()": {
+					"details": "The new owner accepts the ownership transfer."
 				},
 				"allowance(address,address)": {
 					"details": "Returns the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through {transferFrom}. This is zero by default. This value changes when {approve} or {transferFrom} are called."
@@ -773,17 +891,26 @@
 				"balanceOf(address)": {
 					"details": "Returns the value of tokens owned by `account`."
 				},
+				"constructor": {
+					"details": "Mints 1 billion IDRX to the initial owner for test liquidity.",
+					"params": {
+						"initialOwner": "The address that will own the contract and receive the initial supply."
+					}
+				},
 				"decimals()": {
 					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5.05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. This is the default value returned by this function, unless it's overridden. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
 				},
 				"eip712Domain()": {
 					"details": "returns the fields and values that describe the domain separator used by this contract for EIP-712 signature."
 				},
+				"faucet()": {
+					"details": "Callable by anyone. Emits a {FaucetClaim} event."
+				},
 				"mockPayment(address,uint256)": {
-					"details": "HANYA dipanggil oleh Server Wallet (Owner) untuk mencetak IDRX ke Wallet Custodial User.",
+					"details": "Only callable by the owner (Server Wallet). Emits a {MockPayment} event.",
 					"params": {
-						"_amount": "Jumlah IDRX (dalam unit terkecil 18 decimals) yang di-top-up.",
-						"_to": "Alamat wallet Custodial User yang akan menerima IDRX."
+						"_amount": "Amount of IDRX to mint (18 decimals).",
+						"_to": "Address of the custodial wallet receiving IDRX."
 					}
 				},
 				"name()": {
@@ -796,7 +923,14 @@
 					"details": "Returns the address of the current owner."
 				},
 				"ownerMint(address,uint256)": {
-					"details": "Fungsi mint generik, dibatasi hanya untuk Owner (Server Wallet) sebagai kontrol."
+					"details": "Emits a {OwnerMint} event.",
+					"params": {
+						"amount": "Amount of tokens to mint.",
+						"to": "Address to receive minted tokens."
+					}
+				},
+				"pendingOwner()": {
+					"details": "Returns the address of the pending owner."
 				},
 				"permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": {
 					"details": "Sets `value` as the allowance of `spender` over ``owner``'s tokens, given ``owner``'s signed approval. IMPORTANT: The same issues {IERC20-approve} has related to transaction ordering also apply here. Emits an {Approval} event. Requirements: - `spender` cannot be the zero address. - `deadline` must be a timestamp in the future. - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner` over the EIP712-formatted function arguments. - the signature must use ``owner``'s current nonce (see {nonces}). For more information on the signature format, see the https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP section]. CAUTION: See Security Considerations above."
@@ -817,23 +951,40 @@
 					"details": "See {IERC20-transferFrom}. Skips emitting an {Approval} event indicating an allowance update. This is not required by the ERC. See {xref-ERC20-_approve-address-address-uint256-bool-}[_approve]. NOTE: Does not update the allowance if the current allowance is the maximum `uint256`. Requirements: - `from` and `to` cannot be the zero address. - `from` must have a balance of at least `value`. - the caller must have allowance for ``from``'s tokens of at least `value`."
 				},
 				"transferOwnership(address)": {
-					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+					"details": "Starts the ownership transfer of the contract to a new account. Replaces the pending transfer if there is one. Can only be called by the current owner. Setting `newOwner` to the zero address is allowed; this can be used to cancel an initiated ownership transfer."
 				}
 			},
 			"title": "MockIDRX",
 			"version": 1
 		},
 		"userdoc": {
-			"kind": "user",
-			"methods": {
-				"faucet()": {
-					"notice": "Faucet: Memberikan 1 juta IDRX gratis untuk testing developer (dapat dipanggil siapa saja)."
+			"events": {
+				"FaucetClaim(address,uint256)": {
+					"notice": "Emitted when faucet tokens are minted."
 				},
-				"mockPayment(address,uint256)": {
-					"notice": "[CUSTODIAL PAYMENT] Mensimulasikan Top Up Rupiah."
+				"MockPayment(address,uint256)": {
+					"notice": "Emitted when custodial top-up is performed."
+				},
+				"OwnerMint(address,uint256)": {
+					"notice": "Emitted when owner mints new tokens."
 				}
 			},
-			"notice": "1 IDRX = 1 Indonesian Rupiah 18 decimals (standard ERC20)",
+			"kind": "user",
+			"methods": {
+				"constructor": {
+					"notice": "Deploys the Mock IDRX token."
+				},
+				"faucet()": {
+					"notice": "Faucet: mints 1,000,000 IDRX for developer testing."
+				},
+				"mockPayment(address,uint256)": {
+					"notice": "[CUSTODIAL PAYMENT] Mints IDRX to a custodial user wallet."
+				},
+				"ownerMint(address,uint256)": {
+					"notice": "Mints tokens manually (only by owner)."
+				}
+			},
+			"notice": "Mock implementation of IDRX (Indonesian Rupiah X) token for Base Sepolia testing.",
 			"version": 1
 		}
 	},
@@ -860,6 +1011,14 @@
 			"urls": [
 				"bzz-raw://8ed324d3920bb545059d66ab97d43e43ee85fd3bd52e03e401f020afb0b120f6",
 				"dweb:/ipfs/QmfEckWLmZkDDcoWrkEvMWhms66xwTLff9DDhegYpvHo1a"
+			]
+		},
+		"@openzeppelin/contracts/access/Ownable2Step.sol": {
+			"keccak256": "0xdcad8898fda432696597752e8ec361b87d85c82cb258115427af006dacf7128c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e2c9d517f0c136d54bd00cd57959d25681d4d6273f5bbbc263afe228303772f0",
+				"dweb:/ipfs/QmReNFjXBiufByiAAzfSQ2SM5r3qeUErn46BmN3yVRvrek"
 			]
 		},
 		"@openzeppelin/contracts/interfaces/IERC5267.sol": {
@@ -916,14 +1075,6 @@
 			"urls": [
 				"bzz-raw://7496f42681aed94bf0142a077324e50b86046610c1724e7c12e96cf1c365914a",
 				"dweb:/ipfs/QmZvhNdSAAbN4PKPdheAqwpXukUiXp3Q3TdQccDMg2NDTV"
-			]
-		},
-		"@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol": {
-			"keccak256": "0xbe43b6f1e04b5215939f1a76fa612c275b75948f6e7bf25808fb91e99444a33f",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://86d672d9a23f3502472f6827af8e8116a6412b28c234dcfcb201413055cb0159",
-				"dweb:/ipfs/Qmcts6GvEMHuyikwDHtcTdTW4SVP1k66KpUMRcCovWbLN8"
 			]
 		},
 		"@openzeppelin/contracts/utils/Context.sol": {
@@ -1023,11 +1174,11 @@
 			]
 		},
 		"contracts/MockIDRX.sol": {
-			"keccak256": "0x611ce7765968b81aebc3cd7c6ab29e1a0b9581f7fcb197d1f8971df0580cbb27",
+			"keccak256": "0xcd89582fa3d22b3fa3e666f75a8ad728a7a4bb2837c1aca4e509ebf94a64950f",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://33f324fe226151e865969d04f14693783b5181ca49b2e6f6627c7e4e04e941c1",
-				"dweb:/ipfs/QmbLV2M8YgMmHayFCd5psu1qwjedQWpFowQZWQnZHnMwpe"
+				"bzz-raw://c301353701b5aba529976d02d8be76c9474009501ab20ee498a2d09b755ef7b1",
+				"dweb:/ipfs/QmPARY1ZhNwsVmeBnv9sEBhKjYRCZchsEjFRz2ZV3nAkjr"
 			]
 		}
 	},

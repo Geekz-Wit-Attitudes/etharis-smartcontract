@@ -9,21 +9,21 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_idrxToken",
+						"name": "idrxToken_",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "_feeRecipient",
+						"name": "feeRecipient_",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "_initialOwner",
+						"name": "initialOwner_",
 						"type": "address"
 					}
 				],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "constructor"
 			},
 			{
@@ -48,6 +48,126 @@
 				"type": "error"
 			},
 			{
+				"inputs": [],
+				"name": "AmountMustBeGreaterThanZero",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "BriefHashRequired",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "CannotCancelThisDeal",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "CannotWithdrawIDRX",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "ContentUrlRequired",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "CreatorCannotBeBrand",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DeadlineMustBeInFuture",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DeadlineNotPassed",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DealAlreadyExists",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DealAlreadyFunded",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DealNotFound",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "DealNotFunded",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "FeeTooHigh",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InsufficientAllowance",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InsufficientBalance",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InvalidAddress",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InvalidAmount",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InvalidDealID",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "InvalidDealStatus",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "NotAuthorized",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "PermitFailed",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "ReasonRequired",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "ReviewPeriodEnded",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "ReviewPeriodNotEnded",
+				"type": "error"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -56,6 +176,11 @@
 					}
 				],
 				"name": "SafeERC20FailedOperation",
+				"type": "error"
+			},
+			{
+				"inputs": [],
+				"name": "SubmissionDeadlinePassed",
 				"type": "error"
 			},
 			{
@@ -81,9 +206,9 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "reviewDeadline",
-						"type": "uint256"
+						"type": "uint64"
 					}
 				],
 				"name": "ContentSubmitted",
@@ -125,9 +250,9 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "refundAmount",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "DealCancelled",
@@ -156,15 +281,15 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "amount",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "deadline",
-						"type": "uint256"
+						"type": "uint64"
 					}
 				],
 				"name": "DealCreated",
@@ -187,9 +312,9 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "amount",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "DealFunded",
@@ -238,20 +363,20 @@
 					{
 						"indexed": false,
 						"internalType": "bool",
-						"name": "accepted8020",
+						"name": "accepted5050",
 						"type": "bool"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "creatorAmount",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "brandRefund",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "DisputeResolved",
@@ -306,15 +431,15 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "amount",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "platformFee",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "PaymentReleased",
@@ -325,15 +450,15 @@
 				"inputs": [
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "oldFee",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
 						"indexed": false,
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "newFee",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "PlatformFeeUpdated",
@@ -429,38 +554,12 @@
 			},
 			{
 				"inputs": [],
-				"name": "BPS_DENOMINATOR",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "DEFAULT_ADMIN_ROLE",
 				"outputs": [
 					{
 						"internalType": "bytes32",
 						"name": "",
 						"type": "bytes32"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "REVIEW_PERIOD",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -477,6 +576,24 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_dealId",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_creatorAddress",
+						"type": "address"
+					}
+				],
+				"name": "acceptDeal",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -527,21 +644,16 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "",
+						"name": "_brand",
 						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
 					}
 				],
 				"name": "brandDeals",
 				"outputs": [
 					{
-						"internalType": "string",
+						"internalType": "string[]",
 						"name": "",
-						"type": "string"
+						"type": "string[]"
 					}
 				],
 				"stateMutability": "view",
@@ -602,14 +714,14 @@
 						"type": "address"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "_amount",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "_deadline",
-						"type": "uint256"
+						"type": "uint64"
 					},
 					{
 						"internalType": "string",
@@ -626,21 +738,16 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "",
+						"name": "_creator",
 						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
 					}
 				],
 				"name": "creatorDeals",
 				"outputs": [
 					{
-						"internalType": "string",
+						"internalType": "string[]",
 						"name": "",
-						"type": "string"
+						"type": "string[]"
 					}
 				],
 				"stateMutability": "view",
@@ -650,71 +757,83 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "",
+						"name": "_dealId",
 						"type": "string"
 					}
 				],
 				"name": "deals",
 				"outputs": [
 					{
-						"internalType": "string",
-						"name": "dealId",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "brand",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "creator",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "deadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "briefHash",
-						"type": "string"
-					},
-					{
-						"internalType": "enum EtharisEscrow.ContractStatus",
-						"name": "status",
-						"type": "uint8"
-					},
-					{
-						"internalType": "uint256",
-						"name": "fundedAt",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "submittedAt",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "reviewDeadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "contentUrl",
-						"type": "string"
-					},
-					{
-						"internalType": "bool",
-						"name": "exists",
-						"type": "bool"
+						"components": [
+							{
+								"internalType": "address",
+								"name": "brand",
+								"type": "address"
+							},
+							{
+								"internalType": "address",
+								"name": "creator",
+								"type": "address"
+							},
+							{
+								"internalType": "string",
+								"name": "dealId",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "briefHash",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "contentUrl",
+								"type": "string"
+							},
+							{
+								"internalType": "uint96",
+								"name": "amount",
+								"type": "uint96"
+							},
+							{
+								"internalType": "uint64",
+								"name": "deadline",
+								"type": "uint64"
+							},
+							{
+								"internalType": "uint64",
+								"name": "fundedAt",
+								"type": "uint64"
+							},
+							{
+								"internalType": "uint64",
+								"name": "submittedAt",
+								"type": "uint64"
+							},
+							{
+								"internalType": "uint64",
+								"name": "reviewDeadline",
+								"type": "uint64"
+							},
+							{
+								"internalType": "uint64",
+								"name": "createdAt",
+								"type": "uint64"
+							},
+							{
+								"internalType": "enum EtharisEscrow.ContractStatus",
+								"name": "status",
+								"type": "uint8"
+							},
+							{
+								"internalType": "bool",
+								"name": "exists",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct EtharisEscrow.Deal",
+						"name": "",
+						"type": "tuple"
 					}
 				],
 				"stateMutability": "view",
@@ -768,37 +887,37 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "dealId",
+						"name": "_dealId",
 						"type": "string"
 					},
 					{
 						"internalType": "address",
-						"name": "brandAddress",
+						"name": "_brandAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "uint96",
-						"name": "amount",
+						"name": "_amount",
 						"type": "uint96"
 					},
 					{
-						"internalType": "uint64",
-						"name": "deadline",
-						"type": "uint64"
+						"internalType": "uint256",
+						"name": "_deadline",
+						"type": "uint256"
 					},
 					{
 						"internalType": "uint8",
-						"name": "v",
+						"name": "_v",
 						"type": "uint8"
 					},
 					{
 						"internalType": "bytes32",
-						"name": "r",
+						"name": "_r",
 						"type": "bytes32"
 					},
 					{
 						"internalType": "bytes32",
-						"name": "s",
+						"name": "_s",
 						"type": "bytes32"
 					}
 				],
@@ -833,14 +952,14 @@
 						"type": "address"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "amount",
-						"type": "uint256"
+						"type": "uint96"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "deadline",
-						"type": "uint256"
+						"type": "uint64"
 					},
 					{
 						"internalType": "enum EtharisEscrow.ContractStatus",
@@ -858,19 +977,24 @@
 						"type": "string"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "reviewDeadline",
-						"type": "uint256"
+						"type": "uint64"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "fundedAt",
-						"type": "uint256"
+						"type": "uint64"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint64",
 						"name": "submittedAt",
-						"type": "uint256"
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "createdAt",
+						"type": "uint64"
 					},
 					{
 						"internalType": "bool",
@@ -971,7 +1095,7 @@
 				"name": "idrxToken",
 				"outputs": [
 					{
-						"internalType": "contract IERC20",
+						"internalType": "address",
 						"name": "",
 						"type": "address"
 					}
@@ -1027,9 +1151,9 @@
 				"name": "platformFeeBps",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"stateMutability": "view",
@@ -1067,7 +1191,7 @@
 					},
 					{
 						"internalType": "bool",
-						"name": "_accept8020",
+						"name": "_accept5050",
 						"type": "bool"
 					}
 				],
@@ -1159,9 +1283,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint96",
 						"name": "_newFeeBps",
-						"type": "uint256"
+						"type": "uint96"
 					}
 				],
 				"name": "updatePlatformFee",
@@ -1172,7 +1296,7 @@
 		],
 		"devdoc": {
 			"author": "Etharis Team",
-			"details": "Escrow contract untuk sponsorship deals. Semua fungsi action hanya dapat dipanggil oleh Server Wallet (Owner).",
+			"details": "Escrow contract for sponsorship deals. All action functions can only be called by the Server Wallet (Owner).",
 			"errors": {
 				"AccessControlBadConfirmation()": [
 					{
@@ -1209,8 +1333,11 @@
 			},
 			"kind": "dev",
 			"methods": {
-				"autoRefundAfterDeadline(string)": {
-					"details": "Dapat dipanggil oleh Brand atau Server Wallet setelah deadline terlampaui dan status masih ACTIVE."
+				"createDeal(string,address,address,uint96,uint64,string)": {
+					"details": "Only SERVER_ROLE can call this function"
+				},
+				"fundDeal(string,address,uint96,uint256,uint8,bytes32,bytes32)": {
+					"details": "Brands sign permit off-chain, server executes with signature for gasless transaction"
 				},
 				"getRoleAdmin(bytes32)": {
 					"details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
@@ -1220,9 +1347,6 @@
 				},
 				"hasRole(bytes32,address)": {
 					"details": "Returns `true` if `account` has been granted `role`."
-				},
-				"pause()": {
-					"details": "Memanggil fungsi internal _pause() dari Pausable."
 				},
 				"paused()": {
 					"details": "Returns true if the contract is paused, and false otherwise."
@@ -1235,9 +1359,6 @@
 				},
 				"supportsInterface(bytes4)": {
 					"details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
-				},
-				"unpause()": {
-					"details": "Memanggil fungsi internal _unpause() dari Pausable."
 				}
 			},
 			"title": "EtharisEscrow",
@@ -1246,62 +1367,41 @@
 		"userdoc": {
 			"kind": "user",
 			"methods": {
+				"acceptDeal(string,address)": {
+					"notice": "[CUSTODIAL] Creator accepts the funded deal"
+				},
 				"approveDeal(string,address)": {
 					"notice": "[CUSTODIAL] Brand approve content & release payment."
 				},
 				"autoRefundAfterDeadline(string)": {
-					"notice": "Memicu refund penuh ke Brand jika Creator gagal submit konten sebelum deadline."
+					"notice": "Triggers a full refund to the Brand if the Creator fails to submit content before the deadline."
 				},
 				"autoReleasePayment(string)": {
-					"notice": "Auto-release payment."
-				},
-				"canAutoRelease(string)": {
-					"notice": "Check if can auto-release."
+					"notice": "Auto-release payment after review period"
 				},
 				"cancelDeal(string,address)": {
-					"notice": "[CUSTODIAL] Cancel deal sebelum funded."
+					"notice": "[CUSTODIAL] Cancel the deal before it is funded."
 				},
-				"createDeal(string,address,address,uint256,uint256,string)": {
-					"notice": "[CUSTODIAL] Brand membuat deal baru."
+				"createDeal(string,address,address,uint96,uint64,string)": {
+					"notice": "[CUSTODIAL] Brand creates a new deal."
 				},
 				"emergencyCancelDeal(string)": {
-					"notice": "Emergency cancel deal (owner only)."
+					"notice": "Emergency cancel deal (SERVER_ROLE only)."
 				},
-				"emergencyWithdraw(address,uint256)": {
-					"notice": "Withdraw stuck tokens (emergency only, not deal funds)."
-				},
-				"fundDeal(string,address,uint96,uint64,uint8,bytes32,bytes32)": {
-					"notice": "[CUSTODIAL] Brand fund deal."
-				},
-				"getDeal(string)": {
-					"notice": "Mendapatkan detail deal."
-				},
-				"getDeals(address,bool)": {
-					"notice": "Mendapatkan daftar deal berdasarkan Brand atau Creator."
+				"fundDeal(string,address,uint96,uint256,uint8,bytes32,bytes32)": {
+					"notice": "[CUSTODIAL] Brand fund deal with gasless permit support"
 				},
 				"initiateDispute(string,address,string)": {
 					"notice": "[CUSTODIAL] Brand initiate dispute."
-				},
-				"pause()": {
-					"notice": "Pause contract (emergency)."
 				},
 				"resolveDispute(string,address,bool)": {
 					"notice": "[CUSTODIAL] Creator resolve dispute."
 				},
 				"submitContent(string,address,string)": {
-					"notice": "[CUSTODIAL] Creator submit konten."
-				},
-				"unpause()": {
-					"notice": "Unpause contract."
-				},
-				"updateFeeRecipient(address)": {
-					"notice": "Update fee recipient (only owner)."
-				},
-				"updatePlatformFee(uint256)": {
-					"notice": "Update platform fee (only owner)."
+					"notice": "[CUSTODIAL] Creator submits the content."
 				}
 			},
-			"notice": "Menggunakan IDRX sebagai payment token (Indonesian Rupiah stablecoin).",
+			"notice": "Uses IDRX as the payment token (Indonesian Rupiah stablecoin).",
 			"version": 1
 		}
 	},
@@ -1394,14 +1494,6 @@
 				"dweb:/ipfs/QmZvhNdSAAbN4PKPdheAqwpXukUiXp3Q3TdQccDMg2NDTV"
 			]
 		},
-		"@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol": {
-			"keccak256": "0xc7134e0f63b0adcee02bf4b15efb2d0d4b1c03ae0d127dc90d846da4cab23a76",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://f5265dd0f6809e9fbb0ca8da7a5cd0940fcf6d8fcd4df20fbac942617d17b8d6",
-				"dweb:/ipfs/QmS1gFsXoZ3uCEH6mfuRVvhE235WTGA8ttSWSs6Ehc9DUb"
-			]
-		},
 		"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
 			"keccak256": "0x982c5cb790ab941d1e04f807120a71709d4c313ba0bfc16006447ffbd27fbbd5",
 			"license": "MIT",
@@ -1435,11 +1527,11 @@
 			]
 		},
 		"contracts/EtharisEscrow.sol": {
-			"keccak256": "0x7f669a406befa691fb8d2ec379cf81f0cb497bce89f596b1778ea3f48f770686",
+			"keccak256": "0xabee98beed560d57c6f080229dba375a58f7ec0b753ac90af4d66711ae5e0c28",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1f7ac73e57fdd63c8e9097454ba336c2f886560c366b63666a17d1496e24a569",
-				"dweb:/ipfs/QmeH7GuBU4zEPcbGsNgJZRyyfqnNN6v6qed1jaAjDngdxA"
+				"bzz-raw://561daa71ab7f47f07ee2c1de14678f84256897dd3c05872b04d66d0625a65b17",
+				"dweb:/ipfs/QmRH2uGTSNhdHvgjdAmTXMz6YuJdRZMChJqQizPzAn4GhD"
 			]
 		}
 	},
