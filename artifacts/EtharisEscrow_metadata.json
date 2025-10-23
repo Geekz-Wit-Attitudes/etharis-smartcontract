@@ -363,7 +363,7 @@
 					{
 						"indexed": false,
 						"internalType": "bool",
-						"name": "accepted5050",
+						"name": "acceptedDispute",
 						"type": "bool"
 					},
 					{
@@ -791,6 +791,11 @@
 								"type": "string"
 							},
 							{
+								"internalType": "string",
+								"name": "disputeReason",
+								"type": "string"
+							},
+							{
 								"internalType": "uint96",
 								"name": "amount",
 								"type": "uint96"
@@ -817,6 +822,11 @@
 							},
 							{
 								"internalType": "uint64",
+								"name": "disputedAt",
+								"type": "uint64"
+							},
+							{
+								"internalType": "uint64",
 								"name": "createdAt",
 								"type": "uint64"
 							},
@@ -824,6 +834,11 @@
 								"internalType": "enum EtharisEscrow.ContractStatus",
 								"name": "status",
 								"type": "uint8"
+							},
+							{
+								"internalType": "bool",
+								"name": "acceptedDispute",
+								"type": "bool"
 							},
 							{
 								"internalType": "bool",
@@ -977,6 +992,11 @@
 						"type": "string"
 					},
 					{
+						"internalType": "string",
+						"name": "disputeReason",
+						"type": "string"
+					},
+					{
 						"internalType": "uint64",
 						"name": "reviewDeadline",
 						"type": "uint64"
@@ -989,6 +1009,11 @@
 					{
 						"internalType": "uint64",
 						"name": "submittedAt",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "disputedAt",
 						"type": "uint64"
 					},
 					{
@@ -1191,7 +1216,7 @@
 					},
 					{
 						"internalType": "bool",
-						"name": "_accept5050",
+						"name": "_acceptDispute",
 						"type": "bool"
 					}
 				],
@@ -1527,11 +1552,11 @@
 			]
 		},
 		"contracts/EtharisEscrow.sol": {
-			"keccak256": "0xabee98beed560d57c6f080229dba375a58f7ec0b753ac90af4d66711ae5e0c28",
+			"keccak256": "0xb6a150303001cf37418ea900cbfc7808f45d7fe8eb643f3db05a8db27eb84d36",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://561daa71ab7f47f07ee2c1de14678f84256897dd3c05872b04d66d0625a65b17",
-				"dweb:/ipfs/QmRH2uGTSNhdHvgjdAmTXMz6YuJdRZMChJqQizPzAn4GhD"
+				"bzz-raw://e27abd9b9f7e577162b80e46927b8215243b373eec4fdccd1c5d155c906c4da4",
+				"dweb:/ipfs/QmdYJZcPTdLi71RKwRkaVDSwW6eRokA8cE9EPmm1NT89Ze"
 			]
 		}
 	},

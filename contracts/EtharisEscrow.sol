@@ -68,13 +68,16 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
         string dealId;
         string briefHash;
         string contentUrl;
+        string disputeReason;
         uint96 amount;
         uint64 deadline;
         uint64 fundedAt;
         uint64 submittedAt;
         uint64 reviewDeadline;
+        uint64 disputedAt;
         uint64 createdAt;
         ContractStatus status;
+        bool acceptedDispute;
         bool exists;
     }
 
@@ -116,7 +119,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
     event DisputeResolved(
         string indexed dealId,
         address indexed creator,
-        bool accepted5050,
+        bool acceptedDispute,
         uint96 creatorAmount,
         uint96 brandRefund
     );
@@ -422,6 +425,8 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
         if (bytes(_reason).length == 0) revert ReasonRequired();
 
         deal.status = ContractStatus.DISPUTED;
+        deal.disputeReason = _reason;
+        deal.disputedAt = uint64(block.timestamp);
 
         emit DisputeInitiated(_dealId, _brandAddress, _reason);
     }
@@ -432,7 +437,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
     function resolveDispute(
         string memory _dealId,
         address _creatorAddress,
-        bool _accept5050
+        bool _acceptDispute
     )
         external
         nonReentrant
@@ -452,6 +457,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
         uint96 feeBps = _platformFeeBps;
 
         deal.status = ContractStatus.COMPLETED;
+        deal.acceptedDispute = _acceptDispute;
 
         uint96 creatorAmount;
         uint96 brandRefund;
@@ -459,8 +465,8 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
 
         IERC20 token = _idrxToken;
 
-        if (_accept5050) {
-            uint96 grossPayout = (totalEscrow * 5000) / BPS_DENOMINATOR;
+        if (_acceptDispute) {
+            uint96 grossPayout = (totalEscrow * 5000) / BPS_DENOMINATOR; // 50%
             brandRefund = totalEscrow - grossPayout;
 
             platformFee = (grossPayout * feeBps) / BPS_DENOMINATOR;
@@ -482,7 +488,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
         emit DisputeResolved(
             _dealId,
             _creatorAddress,
-            _accept5050,
+            _acceptDispute,
             creatorAmount,
             brandRefund
         );
@@ -606,9 +612,11 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
             ContractStatus status,
             string memory briefHash,
             string memory contentUrl,
+            string memory disputeReason,
             uint64 reviewDeadline,
             uint64 fundedAt,
             uint64 submittedAt,
+            uint64 disputedAt,
             uint64 createdAt,
             bool exists
         )
@@ -625,9 +633,11 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
             deal.status,
             deal.briefHash,
             deal.contentUrl,
+            deal.disputeReason,
             deal.reviewDeadline,
             deal.fundedAt,
             deal.submittedAt,
+            deal.disputedAt,
             deal.createdAt,
             deal.exists
         );
