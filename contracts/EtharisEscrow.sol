@@ -618,6 +618,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
             uint64 submittedAt,
             uint64 disputedAt,
             uint64 createdAt,
+            bool acceptedDispute,
             bool exists
         )
     {
@@ -639,6 +640,7 @@ contract EtharisEscrow is ReentrancyGuard, Pausable, AccessControl {
             deal.submittedAt,
             deal.disputedAt,
             deal.createdAt,
+            deal.acceptedDispute,
             deal.exists
         );
     }

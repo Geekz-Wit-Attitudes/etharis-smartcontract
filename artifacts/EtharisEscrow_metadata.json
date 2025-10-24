@@ -1023,6 +1023,11 @@
 					},
 					{
 						"internalType": "bool",
+						"name": "acceptedDispute",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
 						"name": "exists",
 						"type": "bool"
 					}
@@ -1552,11 +1557,11 @@
 			]
 		},
 		"contracts/EtharisEscrow.sol": {
-			"keccak256": "0xb6a150303001cf37418ea900cbfc7808f45d7fe8eb643f3db05a8db27eb84d36",
+			"keccak256": "0x3b23fbf4d90f6b0eaf3df601e74b81deab9faafc11975c12e05178b965f5b9bd",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e27abd9b9f7e577162b80e46927b8215243b373eec4fdccd1c5d155c906c4da4",
-				"dweb:/ipfs/QmdYJZcPTdLi71RKwRkaVDSwW6eRokA8cE9EPmm1NT89Ze"
+				"bzz-raw://d2bcbc55ab9ecc045eb62295ffedbd18b69b8fea1794b3bc0fda9bcf6fd03939",
+				"dweb:/ipfs/QmZUpZ8Zd94fGtS2otYLbaHucLDfEUbg3PXJte3SCSvX32"
 			]
 		}
 	},
